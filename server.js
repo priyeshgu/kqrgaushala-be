@@ -81,9 +81,108 @@ app.get('/donationCategories', async (req, res) => {
       categoryName: category,
       donations,
     }));
+    
+    
   
     return donationCategories;
   }
+
+  // Endpoint to handle GET requests for fetching all records from the 'donators' table
+app.get('/donators', async (req, res) => {
+  try {
+    console.log('Get Request received for /donators');
+    // Query to retrieve all records from the 'donators' table
+    const query = 'SELECT * FROM donators';
+    const result = await pool.query(query);
+
+    // Send the fetched records as JSON response
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error('Error retrieving data:', error);
+    // Handle error and send an error response
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});
+
+
+// Endpoint to add products
+app.post('/addproduct', async (req, res) => {
+  try {
+    console.log('Request received for /addproduct');
+    const { name_in_english,name_in_hindi,type,cost } = req.body;
+    console.log(datetime)
+
+    // Insert data into the PostgreSQL database
+    const result = await pool.query(
+      'INSERT INTO donation_products (name_in_english,name_in_hindi,type,cost) VALUES ($1, $2, $3,$4) RETURNING *',
+      [name_in_english,name_in_hindi,type,cost]
+    );
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error('Error processing donation product:', error);
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});
+
+
+// Endpoint to handle updating donation products
+app.post('/api/updateProduct', async (req, res) => {
+  try {
+    // Extracting data from the request body
+    const { id,name_in_english, name_in_hindi, type, cost } = req.body;
+
+    // Query to update the fields in the 'donation_products' table
+    const query = `
+      UPDATE donation_products
+      SET name_in_english = $2, name_in_hindi = $3, type = $4, cost = $5
+      WHERE id=$1;
+    `;
+
+    const result = await pool.query(query, [id,name_in_english, name_in_hindi, type, cost]);
+
+    // Check if any rows were affected
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Record not found' });
+    }
+
+    // Send a success response
+    res.json({ success: true, message: 'Record updated successfully' });
+  } catch (error) {
+    console.error('Error updating donation product:', error);
+    // Handle error and send an error response
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});
+
+// Endpoint to handle  deleting donation products
+app.post('/api/deleteProduct', async (req, res) => {
+  try {
+    // Extracting data from the request body
+    const { id, name_in_english, name_in_hindi, type, cost } = req.body;
+
+    // Query to delete the fields in the 'donation_products' table
+    const query = `
+      DELETE FROM donation_products
+      WHERE id = $1 AND name_in_english = $2 AND name_in_hindi = $3 AND type = $4 AND cost = $5;
+    `;
+
+    const result = await pool.query(query, [id, name_in_english, name_in_hindi, type, cost]);
+
+    // Check if any rows were affected
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'Record not found' });
+    }
+
+    // Send a success response
+    res.json({ success: true, message: 'Record deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting donation product:', error);
+    // Handle error and send an error response
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});
+
 
 // Start the server
 app.listen(port, () => {
