@@ -127,7 +127,7 @@ app.post('/addproduct', async (req, res) => {
 
 
 // Endpoint to handle updating donation products
-app.post('/api/updateProduct', async (req, res) => {
+app.post('/updateProduct', async (req, res) => {
   try {
     // Extracting data from the request body
     const { id,name_in_english, name_in_hindi, type, cost } = req.body;
@@ -156,7 +156,7 @@ app.post('/api/updateProduct', async (req, res) => {
 });
 
 // Endpoint to handle  deleting donation products
-app.post('/api/deleteProduct', async (req, res) => {
+app.post('/deleteProduct', async (req, res) => {
   try {
     // Extracting data from the request body
     const { id, name_in_english, name_in_hindi, type, cost } = req.body;
