@@ -106,7 +106,7 @@ app.get('/donators', async (req, res) => {
 
 
 // Endpoint to add products
-app.post('/addproduct', async (req, res) => {
+app.post('/addProduct', async (req, res) => {
   try {
     console.log('Request received for /addproduct');
     const { name_in_english,name_in_hindi,type,cost } = req.body;
