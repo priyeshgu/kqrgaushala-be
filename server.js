@@ -44,15 +44,31 @@ app.get('/donationCategories', async (req, res) => {
     try {
         console.log('Request received for /donationCategories');
       // Query to retrieve data from the "donation_products" table
-      const query = 'SELECT * FROM donation_products';
+      const query = 'SELECT * FROM donation_products ORDER BY id ASC';
   
       const result = await pool.query(query);
+      console.log(result,50)
+
+      const typeParam = req.query.type;
+      console.log(req.query.type)
+
+      if (typeParam && typeParam === 'categories') {
   
       // Format the result into the specified JSON format
       const donationCategories = formatDonationCategories(result.rows);
   
       // Send the formatted data as JSON response
       res.json({ donationCategories });
+      }
+      else if (typeParam && typeParam === 'products'){
+        console.log(result,50)
+        console.log(req.query.type)
+        return_result=result['rows']
+        res.json({ return_result });
+      }
+      else{
+        res.json({ message: 'Invalid request type' });
+      }
     } catch (error) {
       console.error('Error retrieving data:', error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -92,7 +108,7 @@ app.get('/donators', async (req, res) => {
   try {
     console.log('Get Request received for /donators');
     // Query to retrieve all records from the 'donators' table
-    const query = 'SELECT * FROM donators';
+    const query = 'SELECT * FROM donators ORDER BY id ASC';
     const result = await pool.query(query);
 
     // Send the fetched records as JSON response
