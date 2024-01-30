@@ -15,6 +15,13 @@ const pool = new Pool({
   port: 5432,
 });
 
+const Razorpay = require('razorpay');
+
+const razorpay = new Razorpay({
+  key_id: 'rzp_test_fXybBXnLaZHeXO',
+  key_secret: 'GIvi420hcJviI8dxRxEiK26u',
+});
+
 app.use(cors());
 
 // Middleware to parse JSON in the request body
@@ -196,6 +203,27 @@ app.post('/deleteProduct', async (req, res) => {
     console.error('Error deleting donation product:', error);
     // Handle error and send an error response
     res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});
+
+app.post('/create-order', async (req, res) => {
+  const { amount } = req.body;
+
+  if (!amount || isNaN(amount) || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid amount provided' });
+  }
+
+  const options = {
+    amount: amount * 100, // Convert amount to paise
+    currency: 'INR',
+  };
+
+  try {
+    const order = await razorpay.orders.create(options);
+    res.json({ order });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
