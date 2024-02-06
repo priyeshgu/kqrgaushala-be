@@ -54,10 +54,8 @@ app.get('/donationCategories', async (req, res) => {
       const query = 'SELECT * FROM donation_products ORDER BY id ASC';
   
       const result = await pool.query(query);
-      console.log(result,50)
 
       const typeParam = req.query.type;
-      console.log(req.query.type)
 
       if (typeParam && typeParam === 'categories') {
   
@@ -68,8 +66,6 @@ app.get('/donationCategories', async (req, res) => {
       res.json({ donationCategories });
       }
       else if (typeParam && typeParam === 'products'){
-        console.log(result,50)
-        console.log(req.query.type)
         return_result=result['rows']
         res.json({ return_result });
       }
@@ -224,6 +220,28 @@ app.post('/create-order', async (req, res) => {
   } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.post('/emailentry', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Insert the email and current datetime into the newsletter table
+    const result = await pool.query(
+      'INSERT INTO newsletter (email, created_at) VALUES ($1, $2) RETURNING *',
+      [email, new Date()]
+    );
+
+    console.log('Inserted into newsletter table:', result.rows[0]);
+
+    // Send a success response to the client
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error handling email entry:', error);
+
+    // Send an error response to the client
+    res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 });
 
