@@ -31,13 +31,12 @@ app.use(bodyParser.json());
 app.post('/donate', async (req, res) => {
   try {
     console.log('Request received for /donate');
-    const { name, phone_num, email, address, product, type, amount, datetime, pan_number,units } = req.body;
-    console.log(datetime)
+    const { name, phone_num, email, address, product, type, amount, datetime, pan_number,units,order_id } = req.body;
 
     // Insert data into the PostgreSQL database
     const result = await pool.query(
-      'INSERT INTO donators (name, phone_num, email, address, product, type, amount, datetime, pan_number,units) VALUES ($1, $2, $3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',
-      [name, phone_num, email, address, product, type, amount, datetime, pan_number,units]
+      'INSERT INTO donators (name, phone_num, email, address, product, type, amount, datetime, pan_number,units,order_id) VALUES ($1, $2, $3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
+      [name, phone_num, email, address, product, type, amount, datetime, pan_number,units,order_id]
     );
 
     res.json({ success: true, data: result.rows[0] });
@@ -129,7 +128,6 @@ app.post('/addProduct', async (req, res) => {
   try {
     console.log('Request received for /addproduct');
     const { name_in_english,name_in_hindi,type,cost } = req.body;
-    // console.log(datetime)
 
     // Insert data into the PostgreSQL database
     const result = await pool.query(
