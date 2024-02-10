@@ -8,10 +8,10 @@ const port = 3001;
 
 // PostgreSQL database connection configuration
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'gaushalakqr',
-  password: 'abc',
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASS,
   port: 5432,
 });
 
