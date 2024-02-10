@@ -214,7 +214,7 @@ app.post('/create-order', async (req, res) => {
 
   try {
     const order = await razorpay.orders.create(options);
-    res.json({ order });
+    res.json({  order, razorpayKey: process.env.RZP_KEY });
   } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({ error: 'Internal Server Error' });
