@@ -18,8 +18,8 @@ const pool = new Pool({
 const Razorpay = require('razorpay');
 
 const razorpay = new Razorpay({
-  key_id: 'rzp_test_fXybBXnLaZHeXO',
-  key_secret: 'GIvi420hcJviI8dxRxEiK26u',
+  key_id: process.env.RZP_KEY,
+  key_secret: process.env.RZP_SECRET,
 });
 
 app.use(cors());
