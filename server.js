@@ -2,9 +2,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 const cors = require('cors');
-
-const app = express();
+const { google } = require('googleapis');const app = express();
 const port = 3001;
+const nodemailer = require('nodemailer');
+const multer = require('multer');
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage: storage });
 
 // PostgreSQL database connection configuration
 const pool = new Pool({
@@ -18,8 +21,8 @@ const pool = new Pool({
 const Razorpay = require('razorpay');
 
 const razorpay = new Razorpay({
-  key_id: 'rzp_test_fXybBXnLaZHeXO',
-  key_secret: 'GIvi420hcJviI8dxRxEiK26u',
+  key_id: 'rzp_test_agzpkjdZfcoZjv',
+  key_secret: 'sYAwBXUGEH6bOxgtataz3F0a',
 });
 
 app.use(cors());
@@ -243,6 +246,59 @@ app.post('/emailentry', async (req, res) => {
   }
 });
 
+const CLIENT_ID = '115248240064-gdvh8t82qtkugooqsf2q95q12pqfqvo4.apps.googleusercontent.com';
+const CLIENT_SECRET = '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';
+const REDIRECT_URL = 'https://developers.google.com/oauthplayground';
+const REFRESH_TOKEN = '1//04oAo6igXE0RaCgYIARAAGAQSNwF-L9Ir9AgrlyvTgCKeBHYv-bJSSmLojfTizxnkvmGvCO3t6lq51NDcBBIFKtASsJ6XfL--Q-0'; // Obtain this token using OAuth2 Playground or other means
+const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
+oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+
+// Function to send email
+const sendEmail = async (toEmail, subject, message,filename,pdf) => {
+  const accessToken = await oAuth2Client.getAccessToken();
+  oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: 'kqrgaushala@gmail.com', // Your Gmail address
+      clientId: CLIENT_ID,
+      clientSecret: CLIENT_SECRET,
+      refreshToken: REFRESH_TOKEN,
+      accessToken: accessToken,
+    },
+  });
+
+  const mailOptions = {
+    from: 'kqrgaushala@gmail.com',
+    to: toEmail,
+    subject: subject,
+    text: message,
+    attachments: [{
+      filename: filename,
+      content: pdf,
+      encoding: 'base64'
+    }]
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+// Endpoint to send email
+app.post('/send-email', upload.single('pdf'), async (req, res) => {
+  const { to, subject, message,filename } = req.body;
+  const pdfFile = req.file;
+
+  try {
+    await sendEmail(to, subject, message,filename,pdfFile.buffer);
+    console.log('Request received for /send-email');
+    res.status(200).json({ success: true, message: 'Email sent successfully' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ success: false, error: 'Failed to send email' });
+  }
+});
 
 // Start the server
 app.listen(port, () => {
