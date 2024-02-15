@@ -2,9 +2,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 const cors = require('cors');
-
-const app = express();
+const { google } = require('googleapis');const app = express();
 const port = 3001;
+const nodemailer = require('nodemailer');
+const multer = require('multer');
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage: storage });
 
 // PostgreSQL database connection configuration
 const pool = new Pool({
@@ -243,6 +246,56 @@ app.post('/emailentry', async (req, res) => {
   }
 });
 
+
+const oAuth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, process.env.REDIRECT_URL);
+oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+
+// Function to send email
+const sendEmail = async (toEmail, subject, message,filename,pdf) => {
+  const accessToken = await oAuth2Client.getAccessToken();
+  oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: 'kqrgaushala@gmail.com', // Your Gmail address
+      clientId: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      refreshToken: process.env.REFRESH_TOKEN,
+      accessToken: accessToken,
+    },
+  });
+
+  const mailOptions = {
+    from: 'kqrgaushala@gmail.com',
+    to: toEmail,
+    subject: subject,
+    text: message,
+    attachments: [{
+      filename: filename,
+      content: pdf,
+      encoding: 'base64'
+    }]
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+// Endpoint to send email
+app.post('/send-email', upload.single('pdf'), async (req, res) => {
+  const { to, subject, message,filename } = req.body;
+  const pdfFile = req.file;
+
+  try {
+    await sendEmail(to, subject, message,filename,pdfFile.buffer);
+    console.log('Request received for /send-email');
+    res.status(200).json({ success: true, message: 'Email sent successfully' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ success: false, error: 'Failed to send email' });
+  }
+});
 
 // Start the server
 app.listen(port, () => {
