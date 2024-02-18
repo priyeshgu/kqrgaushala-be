@@ -79,36 +79,36 @@ app.get('/donationCategories', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-  
-  // Function to format donation categories and products
-  function formatDonationCategories(products) {
-    const categoriesMap = new Map();
-  
-    // Group products by category
-    products.forEach((product) => {
-      if (!categoriesMap.has(product.type)) {
-        categoriesMap.set(product.type, []);
-      }
-  
-      categoriesMap.get(product.type).push({
-        nameEnglish: product.name_in_english,
-        nameHindi: product.name_in_hindi,
-        costPerUnit: product.cost,
-      });
-    });
-  
-    // Format the grouped data into the specified JSON format
-    const donationCategories = Array.from(categoriesMap.entries()).map(([category, donations]) => ({
-      categoryName: category,
-      donations,
-    }));
-    
-    
-  
-    return donationCategories;
-  }
 
-  // Endpoint to handle GET requests for fetching all records from the 'donators' table
+// Function to format donation categories and products
+function formatDonationCategories(products) {
+  const categoriesMap = new Map();
+
+  // Group products by category
+  products.forEach((product) => {
+    if (!categoriesMap.has(product.type)) {
+      categoriesMap.set(product.type, []);
+    }
+
+    categoriesMap.get(product.type).push({
+      nameEnglish: product.name_in_english,
+      nameHindi: product.name_in_hindi,
+      costPerUnit: product.cost,
+    });
+  });
+
+  // Format the grouped data into the specified JSON format
+  const donationCategories = Array.from(categoriesMap.entries()).map(([category, donations]) => ({
+    categoryName: category,
+    donations,
+  }));
+  
+  
+
+  return donationCategories;
+}
+
+// Endpoint to handle GET requests for fetching all records from the 'donators' table
 app.get('/donators', async (req, res) => {
   try {
     console.log('Get Request received for /donators');
@@ -296,7 +296,45 @@ app.post('/send-email', upload.single('pdf'), async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to send email' });
   }
 });
+const AWS = require('aws-sdk');
 
+const {
+  Translate,
+} = require('@aws-sdk/client-translate');
+
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_ID,
+  secretAccessKey: process.env.AWS_ACCESS_KEY,
+  region: process.env.AWS_REGION
+});
+
+const translate = new Translate({
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_ID,
+    secretAccessKey: process.env.AWS_ACCESS_KEY,
+  },
+
+  region: process.env.AWS_REGION,
+});
+
+app.post('/translate', async (req, res) => {
+  try {
+    const { webpageContent } = req.body;
+    // Call AWS Translate API to translate the website content
+    const translationParams = {
+      SourceLanguageCode: 'en', // English
+      TargetLanguageCode: 'hi', // Hindi
+      Text: webpageContent  // Replace with your website content
+      // Add any additional parameters as needed
+    };
+
+    const translationData = await translate.translateText(translationParams);
+    res.json(translationData); // Return translated data to frontend
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Failed to translate website' });
+  }
+});
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
